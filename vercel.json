@@ -1,0 +1,12 @@
+{
+    "version": 2,
+    "rewrites": [
+        {
+            "source": "/(.*)",
+            "destination": "/api"
+        }
+    ],
+    "env": {
+        "MONGODB_URI": "mongodb+srv://tanakaisoroku0102:lltn4u6vsubjggi5@cluster0.2z8bgyy.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+    }
+}
