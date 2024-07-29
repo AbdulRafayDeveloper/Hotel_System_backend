@@ -3,7 +3,7 @@ const Schema = mongoose.Schema;
 
 const hotelSchema = new Schema({
     hoteltypes: { type: Schema.Types.ObjectId, ref: 'hoteltypes' },
-    thumbs:[String],
+    thumbs: [String],
     hotelTitle: String,
     address: {
         country: { type: String, enum: ['Russia', 'Abkhazia'], required: true },
@@ -18,14 +18,15 @@ const hotelSchema = new Schema({
         isAvailable: Boolean,
         isWholeDay: Boolean,
         from: { type: String, default: '00:00' },
-        to: { type: String, default: '00:00' },
+        to: { type: String, default: '24:00' },
     },
     checkIn: { type: String, default: '00:00' },
     checkOut: { type: String, default: '00:00' },
     infrastructures: [String],
-    services: [String],
-    nutririons: [String],
+    services: [{ label: String, icon: String }],
+    nutritions: [{ label: String, price: Number }],
     bars: [String],
+    entertainmentsAndSports: [String],
     beautyAndHealth: [String],
     internet: {
         wifiInHotel: {
@@ -50,10 +51,9 @@ const hotelSchema = new Schema({
         services: [String],
 
     },
-    amentities: [String],
     conferenceFacilities: [String],
     seaAndBeach: [String],
-    petsAllowed: Boolean,
+    petsAllowed: { type: Boolean, default: false },
     forChildren: {
         possible: Boolean,
         services: [String]
@@ -61,8 +61,9 @@ const hotelSchema = new Schema({
     accesibleEnvironments: [String],
     staffSays: [String],
     distanceFromTheSea: Number,
-    disatanceFromTheCenter: Number,
+    distanceFromTheCenter: Number,
     roomCategories: [{
+        categoryName: String,
         size: Number,
         roomAmount: Number,
         adultAmount: Number,
@@ -73,7 +74,10 @@ const hotelSchema = new Schema({
             doubleBeds: Number,
             additionalBeds: Number,
         },
-        amentities: [String],
+        amenities: [{
+            icon: String,
+            label: String
+        }],
         photos: [String],
     }],
     reviews: [{
@@ -84,8 +88,18 @@ const hotelSchema = new Schema({
         }],
         good: String,
         bad: String,
+        createdAt: String,
+        like: Number,
+        dislike: Number
     }],
-    applyStatus: { type: String, enum: ['pending', 'allowed', '...'], default: 'pending' }
+    applyStatus: { type: String, enum: ['pending', 'allowed', '...'], default: 'pending' },
+    capacity: String,
+    price: {
+        isDiscounted: Boolean,
+        original: Number,
+        discounted: Number
+    }
+
 })
 
 module.exports = mongoose.model("hotels", hotelSchema);

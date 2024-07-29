@@ -23,9 +23,12 @@ var upload = multer({
 
 const router = express.Router();
 
-router.post('/hotel', upload.fields([{ name: 'thumbs', maxCount: 100 }]), hotelController.addHotel);
-router.post('/hotel/:id', upload.fields([{ name: 'photos', maxCount: 100 }]), hotelController.addRoomCategories);
+router.post('/hotel/thumbnail', upload.single('thumb'), hotelController.uploadThumbnail);
+router.delete('/hotel/thumbnail/:filename', hotelController.removeThumbnail);
+router.post('/hotel', hotelController.addHotel);
+router.post('/hotel/:id', hotelController.addRoomCategories);
 router.get('/hotel', hotelController.listOfHotel);
+router.get('/hotel/:id', hotelController.getHotel);
 router.delete('/hotel/:id', hotelController.deleteHotel);
 router.put('/hotel/status/allow/:id', hotelController.statusAllowOfHotelApplication);
 router.put('/hotel/status/reject/:id', hotelController.statusRejectOfHotelApplication);

@@ -4,13 +4,11 @@ const beautyAndHealth = require('../../models/hotels/beautyAndHealth');
 
 Router.add = async (req, res) => {
     try {
-        console.log("1", req.body);
         if (!req.body.label) {
             return res.status(400).json({ error: 'Label is required' });
         }
 
         const { label } = req.body;
-        console.log("label: ", label);
 
         const existingLabel = await beautyAndHealth.findOne({ label });
         if (existingLabel) {
@@ -22,7 +20,7 @@ Router.add = async (req, res) => {
 
         res.status(201).json({ message: 'Data added successfully' });
     } catch (error) {
-        console.error("Error:", error);
+        console.log("error in catch block: ", error);
         res.status(500).json({ error: 'Internel Server Error' });
     }
 };
@@ -32,7 +30,7 @@ Router.view = async (req, res) => {
         const data = await beautyAndHealth.find();
         res.status(200).json(data);
     } catch (error) {
-        console.error("Error:", error);
+        console.log("error in catch block: ", error);
         res.status(500).json({ error: 'Failed to fetch data' });
     }
 };
@@ -40,9 +38,8 @@ Router.view = async (req, res) => {
 Router.delete = async (req, res) => {
     try {
         const { id } = req.params;
-        console.log("Delete Id: ", id);
         const data = await beautyAndHealth.findById(id);
-        console.log("data: ", data);
+        
         if (!data) {
             return res.status(404).json({ error: 'Data not found' });
         }
@@ -54,7 +51,7 @@ Router.delete = async (req, res) => {
             res.status(404).json({ error: 'Data not found' });
         }
     } catch (error) {
-        console.error("Error:", error);
+        console.log("error in catch block: ", error);
         res.status(500).json({ error: 'Failed to delete.' });
     }
 };

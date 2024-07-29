@@ -10,17 +10,16 @@ const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET;
 const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
-// Define the RegExp for email validation
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
+// owners Signup
 Router.ownersSignup = async (req, res) => {
     const { name, position, mail, phoneNumber, password, favouriteHotels, favouriteExcursions } = req.body;
     try {
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
         if (!name || !position || !mail || !phoneNumber || !password) {
             return res.status(400).json({ error: "All fields are required." });
         }
 
-        // Validate email format
         if (!emailPattern.test(mail)) {
             return res.status(400).json({ error: "Invalid email format." });
         }
@@ -52,12 +51,12 @@ Router.ownersSignup = async (req, res) => {
 
         res.status(201).send('Submitted Successfully');
     } catch (error) {
-        console.log(error)
+        console.log("error in catch block: ", error);
         res.status(500).send('Server error');
     }
 };
 
-// login Api //
+// owners login
 Router.ownersLogin = async (req, res) => {
     try {
         const { mail, password } = req.body;
@@ -78,22 +77,22 @@ Router.ownersLogin = async (req, res) => {
                             JWT_SECRET,
                             { expiresIn: '24h' }
                         );
-                        res.json({ status: 200, message: "Login Successful", data: user, token: token });
+                        res.status(200).json({ message: "Login Successful", token: token });
                     } else {
-                        res.json({ status: 400, message: "Password Not Match." });
+                        res.status(400).json({ message: "Password Not Match." });
                     }
                 } else {
-                    res.json({ status: 400, message: "You are not Owner." });
+                    res.status(400).json({ message: "You are not Owner." });
                 }
             } else {
-                res.json({ status: 400, message: "This Account Does Not Exist." });
+                res.status(400).json({ message: "This Account Does Not Exist." });
             }
         } else {
-            res.json({ status: 400, message: "Please Input All Required Information" });
+            res.status(400).json({ message: "Please Input All Required Information" });
         }
     } catch (error) {
         console.error(error);
-        res.json({ status: 500, message: "An error occurred while processing your request" });
+        res.status(500).json({ message: "An error occurred while processing your request" });
     }
 };
 
@@ -125,7 +124,6 @@ Router.touristLogin = async (req, res) => {
                     to: phoneNumberExist
                 });
             } catch (twilioError) {
-                console.error("Twilio Error: ", twilioError);
                 return res.status(500).send('Error sending SMS');
             }
 
@@ -159,7 +157,6 @@ Router.touristLogin = async (req, res) => {
                     to: phoneNumber
                 });
             } catch (twilioError) {
-                console.error("Twilio Error: ", twilioError);
                 return res.status(500).send('Error sending SMS');
             }
 
@@ -175,6 +172,7 @@ Router.touristLogin = async (req, res) => {
             res.status(200).send({ status: 200, data: 'code sent', userid: user.id, token: token });
         }
     } catch (error) {
+        console.log("error in catch block: ", error);
         res.status(500).send('Server error');
     }
 };
@@ -203,6 +201,7 @@ Router.verifyUser = async (req, res) => {
         );
         res.json({ status: 200, message: "Login Successful", data: user, token: token });
     } catch (error) {
+        console.log("error in catch block: ", error);
         res.status(500).send('Server error');
     }
 };
@@ -241,7 +240,7 @@ Router.employeesSignup = async (req, res) => {
             return res.json({ status: 500, message: 'Your Request has not been submitted. Try again Later!' });
         }
     } catch (error) {
-        console.log("Catch Block Error: ", error);
+        console.log("error in catch block: ", error);
         return res.json({ status: 500, message: 'Internal Server Error. Try again Later!', data: error });
     }
 };
@@ -255,7 +254,6 @@ Router.employeesLogin = async (req, res) => {
                 const userStatus = await User.findOne({ mail: mail, role: { $in: ["employee", "admin"] } });
                 if (userStatus) {
                     const passwordMatch = await bcrypt.compare(password, user.password);
-                    console.log("passwordMatch: ", passwordMatch)
                     if (passwordMatch) {
                         const token = jwt.sign(
                             {
@@ -281,16 +279,14 @@ Router.employeesLogin = async (req, res) => {
             res.json({ status: 400, message: "Please Input All Required Information" });
         }
     } catch (error) {
-        console.error(error);
+        console.log("error in catch block: ", error);
         res.json({ status: 500, message: "An error occurred while processing your request", data: error });
     }
 };
 
 
 Router.listOfEmployees = async (req, res) => {
-    // console.log("1");
     try {
-        // Extract filters from query parameters
         const {
             mail,
             phoneNumber,
@@ -298,43 +294,30 @@ Router.listOfEmployees = async (req, res) => {
             page
         } = req.query;
 
-        // console.log("req.query: ", req.query);
-
         // Validation for filters
         if (mail && typeof mail !== 'string') {
             return res.status(400).json({ error: 'City must be a string' });
         }
 
-        // console.log("3");
-
         if (phoneNumber && typeof phoneNumber !== 'string') {
             return res.status(400).json({ error: 'phone Number must be a string' });
         }
-
-        // console.log("4");
 
         if (perPage && isNaN(parseInt(perPage, 10))) {
             return res.status(400).json({ error: 'perPage must be a number' });
         }
 
-        // console.log("5");
-
         if (page && isNaN(parseInt(page, 10))) {
             return res.status(400).json({ error: 'Page must be a number' });
         }
 
-        // console.log("6");
-
         // Build query object based on provided filters
         const query = {};
-
 
         // Pagination
         const pageNumber = parseInt(page, 10) || 1;
         const itemsPerPage = parseInt(perPage, 10) || 10;
         const skip = (pageNumber - 1) * itemsPerPage;
-
-        // console.log("7");
 
         query.role = "employee";
 
@@ -344,36 +327,30 @@ Router.listOfEmployees = async (req, res) => {
             .limit(itemsPerPage)
             .exec();
 
-        // console.log("employeesRecords: ", employeesRecords);
-
         res.json({ status: 200, message: "Records fetch Successfully", data: employeesRecords });
     } catch (error) {
-        console.error("Error:", error);
+        console.log("error in catch block: ", error);
         res.status(500).json({ error: 'An error occurred while fetching hotels' });
     }
 };
 
 Router.deleteEmployee = async (req, res) => {
-    const { id } = req.params;
-
     try {
-        // Check if the hotel type exists
-        console.log("Delete Id: ", id);
+        const { id } = req.params;
         const data = await User.findById(id);
         if (!data) {
             return res.status(404).json({ error: 'Data not found' });
         }
 
-        // Delete the hotel type from the database
         const result = await User.findByIdAndDelete(id);
-        console.log("result: ", result);
+
         if (result) {
             return res.json({ status: 200, message: 'Deleted successfully' });
         } else {
             res.status(404).json({ error: 'Data not found' });
         }
     } catch (error) {
-        console.error("Error:", error);
+        console.log("error in catch block: ", error);
         res.status(500).json({ error: 'Failed to delete.' });
     }
 };
@@ -387,6 +364,7 @@ Router.getUserRecord = async (req, res) => {
             res.json({ status: 400, message: "Data not found" });
         }
     } catch (error) {
+        console.log("error in catch block: ", error);
         res.json({ status: 500, error: 'An error occurred while retrieving the records.' });
     }
 };
@@ -395,7 +373,7 @@ Router.updateAdminAssignRoles = async (req, res) => {
     try {
         const userData = await User.findById(req.params.id);
         const roles = await req.body.roles;
-        console.log("roles: ", roles);
+
         if (userData) {
             const updateObject = {
                 adminAssignedRoles: roles,
@@ -408,6 +386,7 @@ Router.updateAdminAssignRoles = async (req, res) => {
                 res.json({ status: 400, message: "Not Update" });
         }
     } catch (error) {
+        console.log("error in catch block: ", error);
         res.json({ status: 500, error: 'An error occurred while retrieving the records.' });
     }
 };
@@ -456,6 +435,7 @@ Router.updateUserRecord = async (req, res) => {
             res.json({ status: 400, message: "User not found" });
         }
     } catch (error) {
+        console.log("error in catch block: ", error);
         res.json({ status: 500, error: 'An error occurred while retrieving the records.' });
     }
 };
@@ -465,10 +445,8 @@ Router.getFavoriteHotel = async (req, res) => {
         const data = await User.findById(req.params.id);
         if (data) {
             if (data.favouriteHotels) {
-                console.log("Favourite Hotels: ", data.favouriteHotels);
                 const hotelData = await Hotel.findById(data.favouriteHotels);
                 if (hotelData) {
-                    console.log("hotelTitle: ", hotelData.hotelTitle);
                     res.json({ status: 200, message: "Data get Successfully", hotelTitle: hotelData.hotelTitle, data: hotelData });
                 } else {
                     res.json({ status: 400, message: "Hotel data not found" });
@@ -480,6 +458,7 @@ Router.getFavoriteHotel = async (req, res) => {
             res.json({ status: 400, message: "User not found" });
         }
     } catch (error) {
+        console.log("error in catch block: ", error);
         res.json({ status: 500, error: 'An error occurred while retrieving the records.' });
     }
 };
@@ -489,10 +468,8 @@ Router.getFavoriteExcursion = async (req, res) => {
         const data = await User.findById(req.params.id);
         if (data) {
             if (data.favouriteExcursions) {
-                console.log("favouriteExcursions: ", data.favouriteExcursions);
                 const excursionData = await Excursion.findById(data.favouriteExcursions);
                 if (excursionData) {
-                    console.log("excursionData: ", excursionData.title);
                     res.json({ status: 200, message: "Data get Successfully", ExcursionTitle: excursionData.title, data: excursionData });
                 } else {
                     res.json({ status: 400, message: "Excursion data not found" });
@@ -504,6 +481,7 @@ Router.getFavoriteExcursion = async (req, res) => {
             res.json({ status: 400, message: "User not found" });
         }
     } catch (error) {
+        console.log("error in catch block: ", error);
         res.json({ status: 500, error: 'An error occurred while retrieving the records.' });
     }
 };

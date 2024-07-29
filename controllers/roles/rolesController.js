@@ -4,15 +4,13 @@ const Roles = require('../../models/roles/role');
 
 Router.addRole = async (req, res) => {
     try {
-        console.log("1", req.body.name);
         if (!req.body.name) {
             return res.status(400).json({ error: 'Name is required' });
         }
 
         const { name } = req.body;
-        console.log("name: ", name);
-
         const existingRole = await Roles.findOne({ name });
+
         if (existingRole) {
             return res.status(409).json({ status: 409, message: 'This Role Already exists' });
         }
@@ -40,10 +38,7 @@ Router.listOfRoles = async (req, res) => {
 Router.deleteRole = async (req, res) => {
     try {
         const { id } = req.params;
-        console.log("Delete Id: ", id);
-
         const data = await Roles.findById(id);
-        console.log("data: ", data);
 
         if (!data) {
             return res.status(404).json({ error: 'Data not found' });

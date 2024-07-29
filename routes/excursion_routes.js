@@ -12,6 +12,7 @@ router.post('/excursions/categories', excursion_controller.addCategory);
 
 router.post('/excursions', cpUpload, excursion_controller.addExcursion);
 router.get('/excursions', excursion_controller.listOfExcursions);
+router.get('/excursions/:id', excursion_controller.getExcursion);
 
 router.post('/excursions/keypoints', excursion_controller.addKeypoint);
 

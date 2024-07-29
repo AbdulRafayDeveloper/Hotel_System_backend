@@ -9,7 +9,6 @@ Router.add = async (req, res) => {
             roomCategoryId, cancelableTime, price, promo_code
         } = req.body;
 
-        // Validate required fields
         if (!user || !booking_number || !hotelId || !checkIn || !checkOut || !price || !price.booking) {
             return res.json({ status: 400, message: 'Required fields are missing' });
         }
@@ -20,7 +19,6 @@ Router.add = async (req, res) => {
             return res.json({ status: 409, message: 'This booking already exists in the database' });
         }
 
-        // Create a new booking
         const newBooking = new Booking({
             user, booking_number, comments, hotelId, resident, checkIn, checkOut,
             roomCategoryId, cancelableTime, price, promo_code
@@ -34,7 +32,7 @@ Router.add = async (req, res) => {
             res.json({ status: 500, message: 'Internal server error' });
         }
     } catch (error) {
-        console.error("Error:", error);
+        console.log("error in catch block: ", error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
@@ -44,7 +42,6 @@ Router.addHolidays = async (req, res) => {
         const { bookingId } = req.params;
         const { day, excursion } = req.body;
 
-        // Validate required fields
         if (!day || !excursion) {
             return res.json({ status: 400, message: 'Required fields are missing' });
         }
@@ -65,7 +62,7 @@ Router.addHolidays = async (req, res) => {
             res.json({ status: 500, message: 'Internal server error' });
         }
     } catch (error) {
-        console.error("Error:", error);
+        console.log("error in catch block: ", error);
         res.json({ status: 500, message: 'Internal Server Error' });
     }
 };
@@ -120,7 +117,7 @@ Router.view = async (req, res) => {
 
         res.json({ status: 200, message: "data get successfully", data: bookings });
     } catch (error) {
-        console.error("Error:", error);
+        console.log("error in catch block: ", error);
         res.json({ status: 500, message: 'An error occurred while fetching bookings' });
     }
 };
@@ -147,6 +144,7 @@ Router.update = async (req, res) => {
 
         res.json({ status: 200, message: "updated successfully", data: updatedBooking });
     } catch (error) {
+        console.log("error in catch block: ", error);
         res.status(500).json({ error: 'Server error' });
     }
 };

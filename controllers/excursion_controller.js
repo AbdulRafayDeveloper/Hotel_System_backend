@@ -126,6 +126,16 @@ Router.addExcursion = async (req, res) => {
     }
 }
 
+Router.getExcursion = async (req, res) => {
+    try {
+        if (!req.params.id) return res.status(400).json({ error: "Id is required" })
+        const excursion = await Excursion.findById(req.params.id)
+        res.status(200).json(excursion)
+    } catch (error) {
+        console.error("Error: ", error)
+        return serverErrorResponse(error)
+    }
+}
 
 Router.addKeypoint = async (req, res) => {
     try {

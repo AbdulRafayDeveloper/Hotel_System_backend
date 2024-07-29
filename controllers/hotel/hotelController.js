@@ -5,6 +5,7 @@ const hotelTypes = require('../../models/hotels/Hotel_Types');
 const Hotel = require('../../models/hotels/Hotels');
 const fs = require('fs');
 const path = require('path');
+const withPrefix = require('../../helper/withPrefix');
 
 Router.addHotel = async (req, res) => {
     try {
@@ -17,12 +18,11 @@ Router.addHotel = async (req, res) => {
         const checkOut = req.body.checkOut || "";
         const infrastructures = req.body.infrastructures ? JSON.parse(req.body.infrastructures) : [];
         const services = req.body.services ? JSON.parse(req.body.services) : [];
-        const nutririons = req.body.nutririons ? JSON.parse(req.body.nutririons) : [];
+        const nutritions = req.body.nutritions ? JSON.parse(req.body.nutritions) : [];
         const bars = req.body.bars ? JSON.parse(req.body.bars) : [];
         const beautyAndHealth = req.body.beautyAndHealth ? JSON.parse(req.body.beautyAndHealth) : [];
         const internet = req.body.internet ? JSON.parse(req.body.internet) : {};
         const transport = req.body.transport ? JSON.parse(req.body.transport) : {};
-        const amentities = req.body.amentities ? JSON.parse(req.body.amentities) : [];
         const conferenceFacilities = req.body.conferenceFacilities ? JSON.parse(req.body.conferenceFacilities) : [];
         const seaAndBeach = req.body.seaAndBeach ? JSON.parse(req.body.seaAndBeach) : {};
         const petsAllowed = req.body.petsAllowed || "";
@@ -30,14 +30,12 @@ Router.addHotel = async (req, res) => {
         const accesibleEnvironments = req.body.accesibleEnvironments ? JSON.parse(req.body.accesibleEnvironments) : [];
         const staffSays = req.body.staffSays ? JSON.parse(req.body.staffSays) : [];
         const distanceFromTheSea = req.body.distanceFromTheSea || "";
-        const disatanceFromTheCenter = req.body.disatanceFromTheCenter || "";
+        const distanceFromTheCenter = req.body.distanceFromTheCenter || "";
         const reviews = req.body.reviews ? JSON.parse(req.body.reviews) : [];
         const applyStatus = req.body.applyStatus || "";
-
-        console.log("hoteltypes: ", hoteltypes);
-        console.log("hotelTitle: ", hotelTitle);
-        console.log("address: ", address);
-        console.log("infrastructures: ", infrastructures);
+        const capacity = req.body.capacity || "";
+        const price = req.body.price ? JSON.parse(req.body.price) : {};
+        const roomCategories = req.body.roomCategories ? JSON.parse(req.body.roomCategories) : []
 
         // Check if req.files contains thumbs and photos
         if (!req.files || !req.files.thumbs || req.files.thumbs.length === 0) {
@@ -47,8 +45,6 @@ Router.addHotel = async (req, res) => {
         // Process thumbs
         const thumbFilenames = req.files.thumbs.map(file => file.filename); // Get the filenames from multer
         const thumbs = thumbFilenames.map(filename => `/thumbnails/hotels/${filename}`);
-
-        console.log("thumbs: ", thumbs);
 
         // Validate required fields
         if (!hoteltypes) {
@@ -103,12 +99,11 @@ Router.addHotel = async (req, res) => {
             checkOut,
             infrastructures,
             services,
-            nutririons,
+            nutritions,
             bars,
             beautyAndHealth,
             internet,
             transport,
-            amentities,
             conferenceFacilities,
             seaAndBeach,
             petsAllowed,
@@ -116,16 +111,18 @@ Router.addHotel = async (req, res) => {
             accesibleEnvironments,
             staffSays,
             distanceFromTheSea,
-            disatanceFromTheCenter,
+            distanceFromTheCenter,
             reviews,
-            applyStatus
+            applyStatus,
+            capacity,
+            price,
+            roomCategories
         };
 
         // Create a new Hotel instance
         const newHotel = new Hotel(data);
         newHotel.thumbs = thumbs;
 
-        // Save the hotel to the database
         await newHotel.save();
 
         res.status(201).json({ message: 'Hotel added successfully', hotel: newHotel });
@@ -147,9 +144,6 @@ Router.addRoomCategories = async (req, res) => {
         const photoFilenames = req.files.photos.map(file => file.filename);
         const photos = photoFilenames.map(filename => `/thumbnails/hotels/${filename}`);
 
-        console.log("id: ", id);
-        console.log("photos: ", photos);
-
         // Construct hotelDetails object
         const data = {
             size: req.body.roomAmount,
@@ -162,18 +156,14 @@ Router.addRoomCategories = async (req, res) => {
                 doubleBeds: req.body.doubleBeds,
                 additionalBeds: req.body.additionalBeds
             },
-            amentities: req.body.amentities,
+            amenities: req.body.amenities,
             photos: photos
         };
-
-        console.log("data: ", data);
 
         const hotelRecord = await Hotel.findById(id);
         hotelRecord.roomCategories.push(data);
 
         const result = await hotelRecord.save();
-        console.log("result: ", result);
-        console.log("hotelRecord: ", hotelRecord);
 
         res.status(201).json({ message: 'Hotel updated with room categories successfully', hotel: result });
     } catch (error) {
@@ -196,7 +186,7 @@ Router.listOfHotel = async (req, res) => {
             star,
             hotelType,
             distanceFromTheSea,
-            disatanceFromTheCenter
+            distanceFromTheCenter
         } = req.query;
 
         // Validation for filters
@@ -212,20 +202,9 @@ Router.listOfHotel = async (req, res) => {
             return res.status(400).json({ error: 'perPage must be a number' });
         }
 
-        if (star && !['0', '1', '2', '3', '4', '5'].includes(star)) {
-            return res.status(400).json({ error: 'Star must be a number between 0 and 5' });
-        }
 
         if (hotelType && !mongoose.Types.ObjectId.isValid(hotelType)) {
             return res.status(400).json({ error: 'Invalid hotelType ObjectId' });
-        }
-
-        if (distanceFromTheSea && isNaN(parseInt(distanceFromTheSea, 10))) {
-            return res.status(400).json({ error: 'distanceFromTheSea must be a number' });
-        }
-
-        if (disatanceFromTheCenter && isNaN(parseInt(disatanceFromTheCenter, 10))) {
-            return res.status(400).json({ error: 'fromTheCenter must be a number' });
         }
 
         if (priceFrom && isNaN(parseFloat(priceFrom))) {
@@ -243,29 +222,31 @@ Router.listOfHotel = async (req, res) => {
             query['address.city'] = city;
         }
 
-        if (star) {
-            query.star = parseInt(star, 10);
-        }
+        if (star) query['star'] = { $in: star.split(",") }
 
         if (hotelType) {
             query.hoteltypes = hotelType; // Assuming hotelType is an ObjectId
         }
 
         if (distanceFromTheSea) {
-            query.distanceFromTheSea = parseInt(distanceFromTheSea, 10);
+            const distance = distanceFromTheSea.split(',')
+            if (distance[0] == 'lessThan') query['distanceFromTheSea'] = { $lte: parseInt(distance[1], 10) }
+            if (distance[0] == 'moreThan') query['distanceFromTheSea'] = { $gte: parseInt(distance[1], 10) }
         }
 
-        if (disatanceFromTheCenter) {
-            query.disatanceFromTheCenter = parseInt(disatanceFromTheCenter, 10);
+        if (distanceFromTheCenter) {
+            const distance = distanceFromTheCenter.split(',')
+            if (distance[0] == 'lessThan') query['distanceFromTheCenter'] = { $lte: parseInt(distance[1], 10) }
+            if (distance[0] == 'moreThan') query['distanceFromTheCenter'] = { $gte: parseInt(distance[1], 10) }
         }
 
         if (priceFrom || priceTo) {
-            query['transport.transfer.price'] = {};
+            query['price.discounted'] = {};
             if (priceFrom) {
-                query['transport.transfer.price'].$gte = parseFloat(priceFrom);
+                query['price.discounted'].$gte = parseFloat(priceFrom);
             }
             if (priceTo) {
-                query['transport.transfer.price'].$lte = parseFloat(priceTo);
+                query['price.discounted'].$lte = parseFloat(priceTo);
             }
         }
 
@@ -290,33 +271,40 @@ Router.listOfHotel = async (req, res) => {
             };
         }));
 
-        res.status(200).json({ status: 200, hotels: hotelsWithTypes });
+        res.status(200).json({ hotels: hotelsWithTypes, count: hotelsWithTypes.length });
     } catch (error) {
         console.error("Error:", error);
         res.status(500).json({ error: 'An error occurred while fetching hotels' });
     }
 };
 
+Router.getHotel = async (req, res) => {
+    try {
+        if (!req.params.id) return res.json({ status: 400, message: "Hotel id is required" })
+        const hotel = await Hotel.findById(req.params.id)
+        return res.status(200).json(hotel)
+    } catch (error) {
+        console.error('Error: ', error)
+        res.json({ status: 500, message: "An error occured during get hotel data" })
+    }
+}
+
 Router.deleteHotel = async (req, res) => {
     try {
         const { id } = req.params;
 
-        console.log("enter in delete api: ", id);
-
-        // Validate hotelId
         if (!id) {
             return res.status(400).json({ error: 'Hotel ID is required' });
         }
 
-        // Check if the hotel exists
         const hotel = await Hotel.findById(id);
+
         if (!hotel) {
             return res.status(404).json({ error: 'Hotel not found' });
         }
 
         // Extract image paths from the thumbs array
         const thumbsPaths = hotel.thumbs.map(img => path.join(__dirname, '../../public', img));
-
 
         // Extract image paths from the photos array within each room category
         const photosPaths = hotel.roomCategories.flatMap(category =>
@@ -357,12 +345,10 @@ Router.statusAllowOfHotelApplication = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Validate hotelId
         if (!id) {
             return res.status(400).json({ error: 'Application ID is required' });
         }
 
-        // Check if the hotel exists
         const hotel = await Hotel.findById(id);
 
         if (!hotel) {
@@ -376,10 +362,8 @@ Router.statusAllowOfHotelApplication = async (req, res) => {
             return res.status(400).json({ status: 400, message: 'Status is already allowed.', updatedHotel: hotel });
         }
 
-        // Save the updated hotel document
         await hotel.save();
 
-        // Respond with success message
         res.status(200).json({ status: 200, message: 'Application status changed successfully', updatedHotel: hotel });
     } catch (error) {
         console.error("Error:", error);
@@ -392,12 +376,10 @@ Router.statusRejectOfHotelApplication = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Validate hotelId
         if (!id) {
             return res.status(400).json({ error: 'Application ID is required' });
         }
 
-        // Check if the hotel exists
         const hotel = await Hotel.findById(id);
 
         if (!hotel) {
@@ -411,10 +393,8 @@ Router.statusRejectOfHotelApplication = async (req, res) => {
             return res.status(400).json({ status: 400, message: 'Status is already pending.', updatedHotel: hotel });
         }
 
-        // Save the updated hotel document
         await hotel.save();
 
-        // Respond with success message
         res.status(200).json({ status: 200, message: 'Application status changed successfully', updatedHotel: hotel });
     } catch (error) {
         console.error("Error:", error);
@@ -426,8 +406,6 @@ Router.hotelFeedBackUpdate = async (req, res) => {
     try {
         const hotelId = req.params.id;
         const reviews = req.body.reviews;
-
-        console.log("hotelId: ", hotelId);
 
         if (!Array.isArray(reviews) || !reviews.every(r =>
             r.name && Array.isArray(r.marks) && r.marks.every(m => m.label && m.mark) &&
@@ -456,8 +434,6 @@ Router.hotelFeedBackAdd = async (req, res) => {
         const hotelId = req.params.id;
         const reviews = req.body.reviews;
 
-        console.log("hotelId: ", hotelId);
-
         if (!Array.isArray(reviews) || !reviews.every(r =>
             r.name && Array.isArray(r.marks) && r.marks.every(m => m.label && m.mark) &&
             r.good !== undefined && r.bad !== undefined)) {
@@ -480,4 +456,31 @@ Router.hotelFeedBackAdd = async (req, res) => {
     }
 };
 
+Router.uploadThumbnail = async (req, res) => {
+    try {
+        if (!req.file || !req.file.filename) {
+            return res.status(400).json({ error: 'Image file not provided' });
+        }
+        const thumb = `/thumbnails/hotels/${req.file.filename}`;
+        res.status(201).json({ message: 'Hotel Type added successfully', thumbURL: `${withPrefix(req)}${thumb}` });
+    } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ error: 'An error occurred in uploading the image' });
+    }
+}
+
+Router.removeThumbnail = async (req, res) => {
+    if (!req.params.filename) {
+        return res.status(400).json({ error: 'Image filename not provided' });
+    }
+    const filePath = path.join(__dirname, `../../public/thumbnails/hotels/${req.params.filename}`)
+    fs.unlink(filePath, (err) => {
+        if (err) {
+            console.error(err);
+            res.status(500).json({ message: 'file remove failed' })
+        } else {
+            res.status(200).json({ message: 'file removed' })
+        }
+    });
+}
 module.exports = Router;
