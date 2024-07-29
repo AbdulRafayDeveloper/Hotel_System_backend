@@ -13,7 +13,7 @@ const excursionSchema = new Schema({
     },
     categories: [String],  // says in which categories this excursion is involved   i.e. [ "Jeeping", "Into the mountains" ]
     thumbs: [String],
-    keyPoints: [{ color: String, label: String }],
+    keyPoints: [{ color: String, label: String }], //
     departure: { type: String },
     arrival: { type: String },
     description: {
@@ -34,7 +34,7 @@ const excursionSchema = new Schema({
         include: [String],
         uninclude: [String]
     },
-    consider: [String],
+    consider: [String], //
     reviews: [{
         rating: Number,
         name: String,
@@ -52,7 +52,7 @@ const excursionSchema = new Schema({
     priceFor: [
         { sortByAge: String, price: Number }
     ],
-    start: [Number],
+    start: [Number], //
     excursionType: String
 });
 

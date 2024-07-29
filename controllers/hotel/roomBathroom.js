@@ -1,6 +1,6 @@
 const express = require('express');
 const Router = express.Router();
-const roomAmenities = require('../../models/hotels/roomAmenities');
+const roomBathrooms = require('../../models/hotels/roomBathroom');
 
 Router.add = async (req, res) => {
     try {
@@ -9,13 +9,13 @@ Router.add = async (req, res) => {
         }
 
         const { label } = req.body;
-        const existingLabel = await roomAmenities.findOne({ label });
+        const existingLabel = await roomBathrooms.findOne({ label });
 
         if (existingLabel) {
             return res.status(409).json({ status: 409, message: 'This record already exist in Database' });
         }
 
-        const data = new roomAmenities({ label });
+        const data = new roomBathrooms({ label });
         await data.save();
 
         res.status(201).json({ message: 'Data added successfully' });
@@ -27,7 +27,7 @@ Router.add = async (req, res) => {
 
 Router.view = async (req, res) => {
     try {
-        const data = await roomAmenities.find();
+        const data = await roomBathrooms.find();
         res.status(200).json(data);
     } catch (error) {
         console.error("Error:", error);
@@ -38,13 +38,13 @@ Router.view = async (req, res) => {
 Router.delete = async (req, res) => {
     try {
         const { id } = req.params;
-        const data = await roomAmenities.findById(id);
+        const data = await roomBathrooms.findById(id);
 
         if (!data) {
             return res.status(404).json({ error: 'Data not found' });
         }
 
-        const result = await roomAmenities.findByIdAndDelete(id);
+        const result = await roomBathrooms.findByIdAndDelete(id);
 
         if (result) {
             return res.status(200).json({ status: 200, message: 'Deleted successfully' });

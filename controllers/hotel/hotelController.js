@@ -402,33 +402,6 @@ Router.statusRejectOfHotelApplication = async (req, res) => {
     }
 };
 
-Router.hotelFeedBackUpdate = async (req, res) => {
-    try {
-        const hotelId = req.params.id;
-        const reviews = req.body.reviews;
-
-        if (!Array.isArray(reviews) || !reviews.every(r =>
-            r.name && Array.isArray(r.marks) && r.marks.every(m => m.label && m.mark) &&
-            r.good !== undefined && r.bad !== undefined)) {
-            return res.json({ status: 400, message: 'Invalid reviews data' });
-        }
-
-        const updatedHotel = await Hotel.findByIdAndUpdate(
-            hotelId,
-            { $set: { reviews } },
-            { new: true, runValidators: true }
-        );
-
-        if (!updatedHotel) {
-            return res.json({ status: 404, message: 'Hotel not found' });
-        }
-
-        res.json({ status: 200, message: 'updated successfully', data: updatedHotel });
-    } catch (error) {
-        res.status(500).json({ error: 'Server error' });
-    }
-};
-
 Router.hotelFeedBackAdd = async (req, res) => {
     try {
         const hotelId = req.params.id;
@@ -451,6 +424,33 @@ Router.hotelFeedBackAdd = async (req, res) => {
         }
 
         res.json({ status: 200, message: 'Reviews added successfully', data: updatedHotel });
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+Router.hotelFeedBackUpdate = async (req, res) => {
+    try {
+        const hotelId = req.params.id;
+        const reviews = req.body.reviews;
+
+        if (!Array.isArray(reviews) || !reviews.every(r =>
+            r.name && Array.isArray(r.marks) && r.marks.every(m => m.label && m.mark) &&
+            r.good !== undefined && r.bad !== undefined)) {
+            return res.json({ status: 400, message: 'Invalid reviews data' });
+        }
+
+        const updatedHotel = await Hotel.findByIdAndUpdate(
+            hotelId,
+            { $set: { reviews } },
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedHotel) {
+            return res.json({ status: 404, message: 'Hotel not found' });
+        }
+
+        res.json({ status: 200, message: 'updated successfully', data: updatedHotel });
     } catch (error) {
         res.status(500).json({ error: 'Server error' });
     }
