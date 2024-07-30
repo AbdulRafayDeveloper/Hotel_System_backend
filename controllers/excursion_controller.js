@@ -87,23 +87,37 @@ Router.deleteCategory = async (req, res) => {
     }
 };
 
-
 Router.addKeypoint = async (req, res) => {
     try {
-        if (!req.body.label) {
+        const { label, color } = req.body;
+
+        if (!label) {
             return res.status(400).json({ error: 'Label is required' });
         }
-        if (!req.body.color) {
+        if (!color) {
             return res.status(400).json({ error: 'Color is required' });
         }
 
-        const keypoint = new ExcursionKeypoint({ ...req.body });
+        const existingKeypoint = await ExcursionKeypoint.findOne({ 
+            $or: [{ label }, { color }] 
+        });
+
+        if (existingKeypoint) {
+            if (existingKeypoint.label === label) {
+                return res.status(400).json({ message: 'Label already exists' });
+            }
+            if (existingKeypoint.color === color) {
+                return res.status(400).json({ message: 'Color already exists' });
+            }
+        }
+
+        const keypoint = new ExcursionKeypoint({ label, color });
         await keypoint.save();
 
-        return res.json({ status: 200, message: "Data get Succesfully", data: keypoint });
+        return res.json({ status: 200, message: "Data saved successfully", data: keypoint });
     } catch (error) {
         console.error("Error:", error);
-        return res.json({ status: 500, message: 'Internel Server Error' });
+        return res.status(500).json({ message: 'Internal Server Error' });
     }
 };
 
