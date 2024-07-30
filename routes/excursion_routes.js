@@ -1,11 +1,32 @@
 const express = require('express');
 const excursion_controller = require('../controllers/excursion_controller');
 const upload = require('../helper/upload')
+const multer = require('multer');
+const path = require('path');
+const crypto = require('crypto');
 
 const router = express.Router();
 const cpUpload = upload.fields([{ name: 'thumbs', maxCount: 12 }, { name: 'goodPlaceThumbs', maxCount: 12 }])
 
-router.post('/excursions/categories', excursion_controller.addCategory);
+
+// Image
+var storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        const destinationPath = path.join(__dirname, "../../public/thumbnails/categoriesIcon");
+        cb(null, destinationPath);
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = crypto.randomBytes(16).toString('hex'); // Generate a random string
+        const extension = path.extname(file.originalname); // Get the file extension
+        cb(null, `${uniqueSuffix}${extension}`); // Append the random string to the filename
+    }
+});
+
+var upload2 = multer({
+    storage: storage
+});
+
+router.post('/excursions/categories',upload2.single('icon'), excursion_controller.addCategory);
 router.get('/excursions/categories', excursion_controller.listOfCategories);
 router.delete('/excursions/categories/:id', excursion_controller.deleteCategory);
 

@@ -8,7 +8,7 @@ const path = require('path');
 const mongoose = require("mongoose");
 const { successResponse, serverErrorResponse } = require('../helper/successResponse');
 
-Router.addCategory = async (req, res) => {
+/*Router.addCategory = async (req, res) => {
     try {
         if (!req.body.label) {
             return res.status(400).json({ error: 'Label is required' });
@@ -29,7 +29,30 @@ Router.addCategory = async (req, res) => {
         console.error("Error:", error);
         return serverErrorResponse(res);
     }
-};
+};*/
+
+Router.addCategory = async (req, res) =>{
+    try {
+        console.log("1")
+        if (!req.icon || !req.icon.filename) {
+            return res.status(400).json({ error: 'Icon file not provided' });
+        }
+        console.log("2")
+        if (!req.body.label || req.body.label.trim() === '') {
+            return res.status(400).json({ error: 'Label is required' });
+        }
+        console.log("3")
+        const thumb = `/thumbnails/categoriesIcon/${req.file.filename}`;
+        console.log("4")
+        const categoriesTypes = new ExcursionCategory({ ...req.body, thumb });
+        await categoriesTypes.save();
+        console.log("5")
+        res.status(201).json({ message: 'Excursion Category added successfully' });
+    } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ error: 'An error occurred in uploading the image' });
+    }
+}
 
 // categories
 Router.listOfCategories = async (req, res) => {
