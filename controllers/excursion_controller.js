@@ -8,7 +8,7 @@ const path = require('path');
 const mongoose = require("mongoose");
 const { successResponse, serverErrorResponse } = require('../helper/successResponse');
 
-/*Router.addCategory = async (req, res) => {
+Router.addCategory = async (req, res) => {
     try {
         if (!req.body.label) {
             return res.status(400).json({ error: 'Label is required' });
@@ -29,9 +29,9 @@ const { successResponse, serverErrorResponse } = require('../helper/successRespo
         console.error("Error:", error);
         return serverErrorResponse(res);
     }
-};*/
+};
 
-Router.addCategory = async (req, res) =>{
+/*Router.addCategory = async (req, res) =>{
     try {
         console.log("1")
         if (!req.icon || !req.icon.filename) {
@@ -52,7 +52,7 @@ Router.addCategory = async (req, res) =>{
         console.error("Error:", error);
         res.status(500).json({ error: 'An error occurred in uploading the image' });
     }
-}
+}*/
 
 // categories
 Router.listOfCategories = async (req, res) => {

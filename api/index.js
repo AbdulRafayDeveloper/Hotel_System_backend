@@ -4,6 +4,7 @@ const bodyParser = require("body-parser");
 require("../config/db"); // database connection
 const routes = require("../routes/index"); // get all routes
 
+
 const app = express();
 app.use(express.json());
 const port = 5000;
@@ -17,8 +18,9 @@ app.use(bodyParser.json());
 app.get("/", (req, res) => {
   res.send('main project backend is working now')
 })
-
+const icon_route = require('../routes/Route_icons/icons_router')
 app.use("/", routes); // prefix of all routes is set as "/"
+app.use("/api", icon_route)
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
