@@ -7,6 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const mongoose = require("mongoose");
 const { successResponse, serverErrorResponse } = require('../helper/successResponse');
+const withPrefix = require('../helper/withPrefix')
 
 Router.addCategory = async (req, res) => {
     try {
@@ -57,13 +58,22 @@ Router.addCategory = async (req, res) => {
 // categories
 Router.listOfCategories = async (req, res) => {
     try {
+        // Fetch categories from the database
         let categories = await ExcursionCategory.find().select({ label: 1, icon: 1, _id: -1 });
-        return res.status(200).json(categories);
+
+        // Add a prefix to the icon field if needed
+        const dataWithPrefixedIcons = categories.map(category => ({
+            ...category.toObject(),
+            icon: `${withPrefix(req)}${category.icon}` // Add the host prefix to the icon URL
+        }));
+
+        return res.status(200).json(dataWithPrefixedIcons);
     } catch (error) {
         console.error("Error:", error);
-        return res.status(500).json({ error: 'Internel Server Error' });
+        return res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
 
 Router.deleteCategory = async (req, res) => {
     try {
@@ -156,6 +166,7 @@ Router.deleteKeypoint = async (req, res) => {
 
 Router.addExcursion = async (req, res) => {
     try {
+        console.log(req.body)
         console.log("1")
         if (!req.body.title) {
             return res.status(400).json({ error: 'title is required' });

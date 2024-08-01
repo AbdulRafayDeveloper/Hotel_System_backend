@@ -6,9 +6,9 @@ const path = require('path');
 const crypto = require('crypto');
 
 const router = express.Router();
-const cpUpload = upload.fields([{ name: 'thumbs', maxCount: 12 }, { name: 'goodPlaceThumbs', maxCount: 12 }])
+//const cpUpload = upload.fields([{ name: 'thumbs', maxCount: 12 }, { name: 'goodPlaceThumbs', maxCount: 12 }])
 
-
+const cpUpload = upload.fields([{ name: 'thumbs', maxCount: 12 }])
 // Image
 var storage = multer.diskStorage({
     destination: function (req, file, cb) {
