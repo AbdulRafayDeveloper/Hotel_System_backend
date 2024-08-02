@@ -148,6 +148,7 @@ Router.addExcursion = async (req, res) => {
             return res.status(400).json({ error: 'title is required' });
         }
         const excursion = new Excursion({ ...req.body });
+        console.log(req.body.priceFor)
         if (req.files.thumbs) excursion.thumbs = req.files.thumbs.map((c, i) => `/thumbnails/excursion/${c.filename}`)
         if (req.body.categories) excursion.categories = JSON.parse(req.body.categories);
         if (req.body.keyPoints) excursion.keyPoints = JSON.parse(req.body.keyPoints)
