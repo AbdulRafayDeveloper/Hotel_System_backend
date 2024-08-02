@@ -46,7 +46,6 @@ Router.getIcons = async (req, res) => {
     }
 };
 
-
 Router.deleteIcon = async(req,res) =>{
     try {
         const { id } = req.params;
