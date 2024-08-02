@@ -17,8 +17,9 @@ const userSchema = new Schema({
         default: 'pending'
     },
     adminAssignedRoles: [String],
-    favouriteHotels: { type: Schema.Types.ObjectId, ref: 'hotels' },
-    favouriteExcursions: { type: Schema.Types.ObjectId, ref: 'excursions' }
+    favouriteHotels: [{ type: Schema.Types.ObjectId, ref: 'hotels' }],
+    favouriteExcursions: [{ type: Schema.Types.ObjectId, ref: 'excursions' }],
+    myHotel: { type: Schema.Types.ObjectId, ref: 'hotels' }
 });
 
 module.exports = mongoose.model("users", userSchema);

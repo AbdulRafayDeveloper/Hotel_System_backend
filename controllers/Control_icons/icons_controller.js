@@ -2,20 +2,16 @@ const express = require('express');
 const Router = express.Router();
 const fs = require('fs');
 const path = require('path');
-const mongoose = require("mongoose");
-const { successResponse, serverErrorResponse } = require('../../helper/successResponse');
 const Icons = require('../../models/Model_icons/icons')
 const withPrefix = require('../../helper/withPrefix');
 
 Router.addIcon = async (req, res) =>{
     try {
-    
         if (!req.file || !req.file.filename) { 
             return res.status(400).json({ error: 'Icon file not provided' });
         }
         
         const icon = `/thumbnails/icons/${req.file.filename}`; 
-        
         const categoriesTypes = new Icons({ ...req.body, icon });
         await categoriesTypes.save();
         
@@ -28,23 +24,19 @@ Router.addIcon = async (req, res) =>{
 
 Router.getIcons = async (req, res) => {
     try {
-        // Fetch icons from the database
         let icons = Icons.find();
         
-        // Optionally select specific fields if provided in query
         if (req.query?.fields) {
             icons = await icons.select(req.query.fields);
         } else {
             icons = await icons.select();
         }
 
-        // Map icons to add a prefix to the thumbnail URL if needed
         const dataWithHostPrefixedIcons = icons.map(icon => ({
             ...icon.toObject(),
-            icon: `${withPrefix(req)}${icon.icon}` // Assuming `withPrefix` is a function to add host prefix
+            icon: `${withPrefix(req)}${icon.icon}`
         }));
 
-        // Send successful response with the data
         res.status(200).json(dataWithHostPrefixedIcons);
     } catch (error) {
         console.error("Error:", error);
@@ -65,22 +57,16 @@ Router.deleteIcon = async(req,res) =>{
             return res.status(404).json({ error: 'Icon not found' });
         }
 
-        // Get the thumb path
         const thumbPath = icon.icon;
-        console.log('icon path:',thumbPath)
 
-        // Delete the file from the folder
         if (thumbPath) {
             const absolutePath = path.join(__dirname, '../../public', thumbPath);
-
-            console.log('absolute path:',absolutePath)
 
             fs.unlink(absolutePath, (err) => {
                 if (err) {
                     return res.status(500).json({ error: 'Failed to delete associated file' });
                 }
 
-                // Verify the file has been deleted
                 fs.access(absolutePath, fs.constants.F_OK, (err) => {
                     if (err) {
                         console.log("File successfully deleted from the folder");

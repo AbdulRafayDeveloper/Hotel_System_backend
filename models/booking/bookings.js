@@ -15,7 +15,17 @@ const bookingSchema = new Schema({
     roomCategoryId: { type: Schema.Types.ObjectId, ref: 'room_category_model' },
     holidays: [{
         day: { type: Date },
-        excursion: { type: Schema.Types.ObjectId, ref: 'excursion_model' }
+        excursion: {
+            excursion_id: { type: Schema.Types.ObjectId, ref: 'excursion_model' },
+            title: String,
+            time: String,
+            people: {
+                child: Number,
+                adults: Number,
+                retired: Number,
+                student: Number
+            }
+        }
     }],
     cancelableTime: { type: String },
     price: {

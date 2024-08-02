@@ -36,6 +36,8 @@
     "nodemailer": "^6.9.4",
     "nodemon": "^3.1.4",
     "npm": "^10.1.0",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
     "path": "^0.12.7",
     "socket.io": "^4.7.2",
     "twilio": "^5.2.2",

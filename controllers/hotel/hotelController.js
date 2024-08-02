@@ -1,53 +1,108 @@
 const express = require('express');
 const Router = express.Router();
 const mongoose = require("mongoose");
-const hotelTypes = require('../../models/hotels/Hotel_Types');
+// const hotelTypes = require('../../models/hotels/Hotel_Types');
 const Hotel = require('../../models/hotels/Hotels');
 const fs = require('fs');
 const path = require('path');
 const withPrefix = require('../../helper/withPrefix');
+const HotelModel = require('../../models/hotels/Hotels');
+
+Router.removeMyHotel = async (req, res) => {
+    if (!req.user.myHotel)
+        return res.json({
+            message: 'you did not registered any hotel information'
+        })
+
+    const hotel = await HotelModel.findById(req.user.myHotel)
+    hotel.status = 'deleted'
+    req.user.myHotel = null
+    await req.user.save()
+    await hotel.save()
+    return res.json({ message: 'deleted successfully' })
+}
+
+Router.myHotelStatus = async (req, res) => {
+    if (!req.user.myHotel)
+        return res.json({
+            status: 'empty',
+            message: 'you did not registered any hotel information'
+        })
+
+    const hotel = await HotelModel.findById(req.user.myHotel)
+
+    if (hotel.status === 'allowed')
+        return res.json({
+            status: 'allowed',
+            message: 'your application is allowed',
+        })
+    else {
+        return res.json({
+            status: 'pending',
+            message: 'your application is pending',
+        })
+    }
+}
+
+Router.myHotelData = async (req, res) => {
+    if (!req.user.myHotel)
+        return res.json({
+            status: 'empty',
+            message: 'you did not registered any hotel information'
+        })
+
+    const hotel = await HotelModel.findById(req.user.myHotel)
+
+    if (hotel.status === 'allowed')
+        return res.json({
+            status: 'allowed',
+            message: 'your application is allowed',
+            hotel
+        })
+    else {
+        return res.json({
+            status: 'pending',
+            message: 'your application is pending',
+            hotel
+        })
+    }
+}
 
 Router.addHotel = async (req, res) => {
     try {
-        const hoteltypes = req.body.hoteltypes || "";
+        const hotelType = req.body.hotelType || "";
         const hotelTitle = req.body.hotelTitle || "";
-        const address = req.body.address ? JSON.parse(req.body.address) : {};
+        const address = req.body.address ? req.body.address : {};
         const star = req.body.star || "";
-        const reception = req.body.reception ? JSON.parse(req.body.reception) : {};
+        const reception = req.body.reception ? req.body.reception : {};
         const checkIn = req.body.checkIn || "";
         const checkOut = req.body.checkOut || "";
-        const infrastructures = req.body.infrastructures ? JSON.parse(req.body.infrastructures) : [];
-        const services = req.body.services ? JSON.parse(req.body.services) : [];
-        const nutritions = req.body.nutritions ? JSON.parse(req.body.nutritions) : [];
-        const bars = req.body.bars ? JSON.parse(req.body.bars) : [];
-        const beautyAndHealth = req.body.beautyAndHealth ? JSON.parse(req.body.beautyAndHealth) : [];
-        const internet = req.body.internet ? JSON.parse(req.body.internet) : {};
-        const transport = req.body.transport ? JSON.parse(req.body.transport) : {};
-        const conferenceFacilities = req.body.conferenceFacilities ? JSON.parse(req.body.conferenceFacilities) : [];
-        const seaAndBeach = req.body.seaAndBeach ? JSON.parse(req.body.seaAndBeach) : {};
-        const petsAllowed = req.body.petsAllowed || "";
-        const forChildren = req.body.forChildren ? JSON.parse(req.body.forChildren) : {};
-        const accesibleEnvironments = req.body.accesibleEnvironments ? JSON.parse(req.body.accesibleEnvironments) : [];
-        const staffSays = req.body.staffSays ? JSON.parse(req.body.staffSays) : [];
-        const distanceFromTheSea = req.body.distanceFromTheSea || "";
-        const distanceFromTheCenter = req.body.distanceFromTheCenter || "";
-        const reviews = req.body.reviews ? JSON.parse(req.body.reviews) : [];
+        const infrastructures = req.body.infrastructures ? req.body.infrastructures : [];
+        const amenities = req.body.amenities ? req.body.amenities : [];
+        const services = req.body.services ? req.body.services : [];
+        const nutritions = req.body.nutritions ? req.body.nutritions : [];
+        const bars = req.body.bars ? req.body.bars : [];
+        const beautyAndHealth = req.body.beautyAndHealth ? req.body.beautyAndHealth : [];
+        const internet = req.body.internet ? req.body.internet : {};
+        const transport = req.body.transport ? req.body.transport : {};
+        const conferenceFacilities = req.body.conferenceFacilities ? req.body.conferenceFacilities : [];
+        const seaAndBeach = req.body.seaAndBeach ? req.body.seaAndBeach : {};
+        const petsAllowed = req.body.petsAllowed || false;
+        const forChildren = req.body.forChildren ? req.body.forChildren : {};
+        const accesibleEnvironments = req.body.accesibleEnvironments ? req.body.accesibleEnvironments : [];
+        const staffSays = req.body.staffSays ? req.body.staffSays : [];
+        const distanceFromTheSea = req.body.distanceFromTheSea || 0;
+        const distanceFromTheCenter = req.body.distanceFromTheCenter || 0;
+        const reviews = req.body.reviews ? req.body.reviews : [];
         const applyStatus = req.body.applyStatus || "";
         const capacity = req.body.capacity || "";
-        const price = req.body.price ? JSON.parse(req.body.price) : {};
-        const roomCategories = req.body.roomCategories ? JSON.parse(req.body.roomCategories) : []
-
-        // Check if req.files contains thumbs and photos
-        if (!req.files || !req.files.thumbs || req.files.thumbs.length === 0) {
-            return res.status(400).json({ error: 'Image files for thumbs not provided' });
-        }
-
-        // Process thumbs
-        const thumbFilenames = req.files.thumbs.map(file => file.filename); // Get the filenames from multer
-        const thumbs = thumbFilenames.map(filename => `/thumbnails/hotels/${filename}`);
+        const price = req.body.price ? req.body.price : {};
+        const roomCategories = req.body.roomCategories ? req.body.roomCategories : []
+        const thumbs = req.body.thumbs;
+        const tariffs = req.body.tariffs;
 
         // Validate required fields
-        if (!hoteltypes) {
+        if (!hotelType) {
             return res.status(400).json({ error: 'Hotel type is required' });
         }
 
@@ -60,21 +115,9 @@ Router.addHotel = async (req, res) => {
         }
 
         // Validate country enum
-        const validCountries = ['Russia', 'Abkhazia'];
+        const validCountries = ['Россия', 'Abkhazia'];
         if (!validCountries.includes(address.country)) {
             return res.status(400).json({ error: 'Invalid country' });
-        }
-
-        // Validate hotelType
-        const hotelTypeExists = await hotelTypes.findById(hoteltypes);
-        if (!hotelTypeExists) {
-            return res.status(400).json({ error: 'Invalid hotel type' });
-        }
-
-        // Validate enums for other fields if necessary
-        const validApplyStatus = ['pending', 'allowed', '...'];
-        if (applyStatus && !validApplyStatus.includes(applyStatus)) {
-            return res.status(400).json({ error: 'Invalid apply status' });
         }
 
         // Check nested objects and arrays
@@ -89,7 +132,7 @@ Router.addHotel = async (req, res) => {
 
         // Construct object
         const data = {
-            hoteltypes,
+            hotelType,
             thumbs,
             hotelTitle,
             address,
@@ -98,6 +141,7 @@ Router.addHotel = async (req, res) => {
             checkIn,
             checkOut,
             infrastructures,
+            amenities,
             services,
             nutritions,
             bars,
@@ -116,14 +160,16 @@ Router.addHotel = async (req, res) => {
             applyStatus,
             capacity,
             price,
-            roomCategories
+            roomCategories,
+            applyStatus: 'pending',
+            tariffs,
         };
 
         // Create a new Hotel instance
         const newHotel = new Hotel(data);
-        newHotel.thumbs = thumbs;
-
-        await newHotel.save();
+        const hotelId = await newHotel.save();
+        req.user.myHotel = hotelId
+        await req.user.save()
 
         res.status(201).json({ message: 'Hotel added successfully', hotel: newHotel });
     } catch (error) {
@@ -225,7 +271,7 @@ Router.listOfHotel = async (req, res) => {
         if (star) query['star'] = { $in: star.split(",") }
 
         if (hotelType) {
-            query.hoteltypes = hotelType; // Assuming hotelType is an ObjectId
+            query.hotelType = hotelType; // Assuming hotelType is an ObjectId
         }
 
         if (distanceFromTheSea) {
@@ -262,16 +308,7 @@ Router.listOfHotel = async (req, res) => {
             .sort({ [orderBy]: orderMethod === 'desc' ? -1 : 1 })
             .exec();
 
-        // Fetch hotel types for each hotel and replace the ID with the label
-        const hotelsWithTypes = await Promise.all(hotels.map(async (hotel) => {
-            const hotelType = await hotelTypes.findById(hotel.hoteltypes).exec();
-            return {
-                ...hotel.toObject(),
-                hoteltypes: hotelType ? hotelType.label : 'Unknown',
-            };
-        }));
-
-        res.status(200).json({ hotels: hotelsWithTypes, count: hotelsWithTypes.length });
+        res.status(200).json({ hotels, count: hotels.length });
     } catch (error) {
         console.error("Error:", error);
         res.status(500).json({ error: 'An error occurred while fetching hotels' });
@@ -285,7 +322,7 @@ Router.getHotel = async (req, res) => {
         return res.status(200).json(hotel)
     } catch (error) {
         console.error('Error: ', error)
-        res.json({ status: 500, message: "An error occured during get hotel data" })
+        res.status(500).json({ message: "An error occured during get hotel data" })
     }
 }
 

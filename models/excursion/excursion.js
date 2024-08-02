@@ -49,10 +49,13 @@ const excursionSchema = new Schema({
     withGuider: Boolean,
     withBus: Boolean,
     ticketPrice: Number,
-    priceFor: [
-        { sortByAge: String, price: Number }
-    ],
-    start: [Number], //
+    priceFor: {
+        adult: Number,
+        child: Number,
+        retired: Number,
+        student: Number,
+    },
+    start: [Number],
     excursionType: String
 });
 

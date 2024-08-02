@@ -2,17 +2,19 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const hotelSchema = new Schema({
-    hoteltypes: { type: Schema.Types.ObjectId, ref: 'hoteltypes' },
+    hotelType: { type: String },
     thumbs: [String],
     hotelTitle: String,
     address: {
-        country: { type: String, enum: ['Russia', 'Abkhazia'], required: true },
+        country: { type: String, enum: ['Россия', 'Abkhazia'], required: true },
         region: String,
         city: String,
         street: String,
         house: String,
         building: String,
     },
+    amenities: [String],
+    status: { type: String, enum: ['empty', 'pending', 'allowed', 'deleted'] },
     star: Number,
     reception: {
         isAvailable: Boolean,
@@ -23,8 +25,8 @@ const hotelSchema = new Schema({
     checkIn: { type: String, default: '00:00' },
     checkOut: { type: String, default: '00:00' },
     infrastructures: [String],
-    services: [{ label: String, icon: String }],
-    nutritions: [{ label: String, price: Number }],
+    services: [String],
+    nutritions: [String],
     bars: [String],
     entertainmentsAndSports: [String],
     beautyAndHealth: [String],
@@ -74,10 +76,9 @@ const hotelSchema = new Schema({
             doubleBeds: Number,
             additionalBeds: Number,
         },
-        amenities: [{
-            icon: String,
-            label: String
-        }],
+        entertainments: [String],
+        equipments: [String],
+        bathroom: [String],
         photos: [String],
     }],
     reviews: [{
@@ -92,13 +93,21 @@ const hotelSchema = new Schema({
         like: Number,
         dislike: Number
     }],
-    applyStatus: { type: String, enum: ['pending', 'allowed', '...'], default: 'pending' },
+    applyStatus: { type: String, enum: ['pending', 'allowed'], default: 'pending' },
     capacity: String,
     price: {
         isDiscounted: Boolean,
         original: Number,
         discounted: Number
-    }
+    },
+    tariffs: [{
+        tariffName: String,
+        tariffName: String,
+        tariffType: String,
+        nutrition: String,
+        cancelReservation: String,
+        roomCategory: String,
+    }]
 
 })
 
