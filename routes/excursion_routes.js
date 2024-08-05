@@ -15,7 +15,8 @@ router.delete('/excursions/keypoints/:id', excursion_controller.deleteKeypoint);
 
 router.post('/excursions', cpUpload, excursion_controller.addExcursion);
 router.get('/excursions', excursion_controller.listOfExcursions);
-router.get('/excursions/:id', excursion_controller.getExcursion);
+router.get('/getExcursion/:id', excursion_controller.getExcursion);
+router.put('/excursion/:id', cpUpload, excursion_controller.updateExcursion);
 router.delete('/excursions/:id', excursion_controller.deleteExcursion);
 
 router.put('/excursions/feedback/add/:id', excursion_controller.excursionsFeedBackAdd);

@@ -40,10 +40,8 @@ Router.listOfCategories = async (req, res) => {
 
         const dataWithPrefixedIcons = categories.map(category => ({
             ...category.toObject(),
-            icon: `${withPrefix(req)}${category.icon}` // Add the host prefix to the icon URL
+            icon: `${withPrefix(req)}${category.icon}`
         }));
-
-        console.log("dataWithPrefixedIcons: ", dataWithPrefixedIcons);
 
         return res.status(200).json(dataWithPrefixedIcons);
     } catch (error) {
@@ -113,7 +111,6 @@ Router.addKeypoint = async (req, res) => {
 Router.listOfKeypoints = async (req, res) => {
     try {
         const keyPoints = await ExcursionKeypoint.find();
-        console.log("keyPoints: ", keyPoints);
         return res.status(200).json(keyPoints);
     } catch (error) {
         console.error("Error:", error);
@@ -186,7 +183,7 @@ Router.addExcursion = async (req, res) => {
         if (req.body.excursionType) excursion.excursionType = JSON.parse(req.body.excursionType);
 
         await excursion.save();
-        return successResponse(res)
+        return res.json({ status: 200, message: "Data saved successfully", data: excursion });
     } catch (error) {
         console.error("Error:", error);
         return serverErrorResponse(res);
@@ -259,26 +256,115 @@ Router.getExcursion = async (req, res) => {
     }
 }
 
-// Router.getExcursion = async (req, res) => {
-//     try {
-//         console.log("1");
-//         const excursionId = req.params.id;
+Router.getExcursion = async (req, res) => {
+    try {
+        console.log("1");
+        const excursionId = req.params.id;
 
-//         if (!mongoose.Types.ObjectId.isValid(excursionId)) {
-//             return res.status(400).json({ error: 'Invalid ID format' });
-//         }
+        if (!mongoose.Types.ObjectId.isValid(excursionId)) {
+            return res.status(400).json({ error: 'Invalid ID format' });
+        }
 
-//         const excursion = await Excursion.findById(excursionId);
-//         if (!excursion) {
-//             return res.status(404).json({ error: 'Excursion not found' });
-//         }
+        const excursion = await Excursion.findById(excursionId);
+        if (!excursion) {
+            return res.status(404).json({ error: 'Excursion not found' });
+        }
 
-//         res.status(200).json(excursion);
-//     } catch (error) {
-//         console.error("Error:", error);
-//         return serverErrorResponse(res, error);
-//     }
-// };
+        res.json({ status: 200, message: 'Excursion deleted successfully', data: excursion });
+    } catch (error) {
+        console.error("Error:", error);
+        return serverErrorResponse(res, error);
+    }
+};
+
+Router.updateExcursion = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        console.log("id: ", id)
+
+        if (!id) { return res.status(400).json({ error: 'ID is required' }); }
+        const excursion = await Excursion.findById(id);
+
+        console.log("excursion: ", excursion)
+
+        if (!excursion) { return res.status(404).json({ error: 'Not found' }); }
+
+        // Extract image paths from the thumbs array
+        const thumbsPaths = excursion.thumbs.map(img => path.join(__dirname, '../public', img));
+
+        // Extract image paths from the thumb field within each goodPlace object
+        const goodPlacesPaths = excursion.goodPlaces.map(place => path.join(__dirname, '../public', place.thumb));
+
+        // Combine all paths
+        const allImagePaths = [...thumbsPaths, ...goodPlacesPaths];
+
+        console.log("allImagePaths: ", allImagePaths)
+        // Function to delete a single image
+        const deleteImage = (imagePath) => {
+            return new Promise((resolve, reject) => {
+                fs.unlink(imagePath, (err) => {
+                    if (err) return reject(err);
+                    resolve();
+                });
+            });
+        };
+
+        await Promise.all(allImagePaths.map(deleteImage));
+        const deletedExcursion = await Excursion.findByIdAndDelete(id);
+
+        console.log("deletedExcursion: ", deletedExcursion)
+
+        if (!deletedExcursion) {
+            return res.status(404).json({ error: 'Excursion could not be updated' });
+        }
+        else {
+            if (!req.body.title) { return res.status(400).json({ error: 'title is required' }); }
+
+            const excursion = new Excursion({ ...req.body });
+            console.log("excursion: ", excursion)
+
+            if (req.files.thumbs) excursion.thumbs = req.files.thumbs.map((c, i) => `/thumbnails/excursion/${c.filename}`)
+            if (req.body.categories) excursion.categories = JSON.parse(req.body.categories);
+            if (req.body.keyPoints) excursion.keyPoints = JSON.parse(req.body.keyPoints)
+
+            if (req.body.program) {
+                excursion.program = JSON.parse(req.body.program)
+                excursion.duration = JSON.parse(req.body.program).reduce((total, c) => total + c.duration, 0)
+            }
+
+            if (req.body.goodPlaces) excursion.goodPlaces = JSON.parse(req.body.goodPlaces).map((c, i) => { return { ...c, thumb: `/thumbnails/excursion/${req.files.goodPlaceThumbs[i].filename}` } })
+            if (req.body.priceDetail) excursion.priceDetail = JSON.parse(req.body.priceDetail)
+            if (req.body.consider) excursion.consider = JSON.parse(req.body.consider)
+            if (req.body.priceFor) excursion.priceFor = JSON.parse(req.body.priceFor)
+            if (req.body.start) excursion.start = JSON.parse(req.body.start)
+            if (req.body.address) excursion.address = JSON.parse(req.body.address)
+
+            if (req.body.typeOfVisit) {
+                const typeOfVisit = JSON.parse(req.body.typeOfVisit);
+                typeOfVisit.maxPeople = Number(typeOfVisit.maxPeople);
+
+                excursion.typeOfVisit = {
+                    typeof: typeOfVisit.typeOf, // Map to the correct key name
+                    maxPeople: typeOfVisit.maxPeople
+                };
+            }
+
+            if (req.body.departure) excursion.departure = JSON.parse(req.body.departure);
+            if (req.body.arrival) excursion.arrival = JSON.parse(req.body.arrival);
+            if (req.body.description) excursion.description = JSON.parse(req.body.description);
+            if (req.body.howToWork) excursion.howToWork = JSON.parse(req.body.howToWork);
+            if (req.body.excursionType) excursion.excursionType = JSON.parse(req.body.excursionType);
+
+            console.log("excursion: ", excursion)
+            await excursion.save();
+            return res.json({ status: 200, message: "Data updated successfully", data: excursion });
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        return serverErrorResponse(res);
+    }
+};
 
 Router.deleteExcursion = async (req, res) => {
     try {
@@ -302,8 +388,6 @@ Router.deleteExcursion = async (req, res) => {
 
         // Combine all paths
         const allImagePaths = [...thumbsPaths, ...goodPlacesPaths];
-
-        console.log("allImagePaths: ", allImagePaths);
 
         // Function to delete a single image
         const deleteImage = (imagePath) => {
@@ -337,9 +421,6 @@ Router.excursionsFeedBackAdd = async (req, res) => {
         const excursionId = req.params.id;
         const reviews = req.body.reviews;
 
-        console.log("excursionId: ", excursionId);
-
-        // Validate reviews field
         if (!Array.isArray(reviews) || !reviews.every(r =>
             typeof r.rating === 'number' &&
             typeof r.name === 'string' &&
@@ -372,8 +453,6 @@ Router.excursionsFeedBackUpdate = async (req, res) => {
     try {
         const excursionId = req.params.id;
         const reviews = req.body.reviews;
-
-        console.log("excursionId: ", excursionId);
 
         // Validate reviews field
         if (!Array.isArray(reviews) || !reviews.every(r =>
