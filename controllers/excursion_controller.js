@@ -148,6 +148,12 @@ Router.addExcursion = async (req, res) => {
             return res.status(400).json({ error: 'title is required' });
         }
 
+        // Check if an excursion with the same title already exists
+        const existingExcursion = await Excursion.findOne({ title: req.body.title });
+        if (existingExcursion) {
+            return res.json({ status: 400, message: 'An excursion with this title already exists' });
+        }
+
         const excursion = new Excursion({ ...req.body });
 
         if (req.files.thumbs) excursion.thumbs = req.files.thumbs.map((c, i) => `/thumbnails/excursion/${c.filename}`)
@@ -171,7 +177,7 @@ Router.addExcursion = async (req, res) => {
             typeOfVisit.maxPeople = Number(typeOfVisit.maxPeople);
 
             excursion.typeOfVisit = {
-                typeof: typeOfVisit.typeOf, // Map to the correct key name
+                typeof: typeOfVisit.typeof,
                 maxPeople: typeOfVisit.maxPeople
             };
         }
@@ -190,10 +196,8 @@ Router.addExcursion = async (req, res) => {
     }
 }
 
-// Excursions
 Router.listOfExcursions = async (req, res) => {
     try {
-
         // Extract filters from query parameters
         const {
             city,
@@ -281,26 +285,15 @@ Router.updateExcursion = async (req, res) => {
     try {
         const { id } = req.params;
 
-        console.log("id: ", id)
-
         if (!id) { return res.status(400).json({ error: 'ID is required' }); }
         const excursion = await Excursion.findById(id);
 
-        console.log("excursion: ", excursion)
-
         if (!excursion) { return res.status(404).json({ error: 'Not found' }); }
 
-        // Extract image paths from the thumbs array
         const thumbsPaths = excursion.thumbs.map(img => path.join(__dirname, '../public', img));
-
-        // Extract image paths from the thumb field within each goodPlace object
         const goodPlacesPaths = excursion.goodPlaces.map(place => path.join(__dirname, '../public', place.thumb));
-
-        // Combine all paths
         const allImagePaths = [...thumbsPaths, ...goodPlacesPaths];
 
-        console.log("allImagePaths: ", allImagePaths)
-        // Function to delete a single image
         const deleteImage = (imagePath) => {
             return new Promise((resolve, reject) => {
                 fs.unlink(imagePath, (err) => {
@@ -313,8 +306,6 @@ Router.updateExcursion = async (req, res) => {
         await Promise.all(allImagePaths.map(deleteImage));
         const deletedExcursion = await Excursion.findByIdAndDelete(id);
 
-        console.log("deletedExcursion: ", deletedExcursion)
-
         if (!deletedExcursion) {
             return res.status(404).json({ error: 'Excursion could not be updated' });
         }
@@ -322,7 +313,6 @@ Router.updateExcursion = async (req, res) => {
             if (!req.body.title) { return res.status(400).json({ error: 'title is required' }); }
 
             const excursion = new Excursion({ ...req.body });
-            console.log("excursion: ", excursion)
 
             if (req.files.thumbs) excursion.thumbs = req.files.thumbs.map((c, i) => `/thumbnails/excursion/${c.filename}`)
             if (req.body.categories) excursion.categories = JSON.parse(req.body.categories);
@@ -345,7 +335,7 @@ Router.updateExcursion = async (req, res) => {
                 typeOfVisit.maxPeople = Number(typeOfVisit.maxPeople);
 
                 excursion.typeOfVisit = {
-                    typeof: typeOfVisit.typeOf, // Map to the correct key name
+                    typeof: typeOfVisit.typeof,
                     maxPeople: typeOfVisit.maxPeople
                 };
             }
@@ -356,7 +346,6 @@ Router.updateExcursion = async (req, res) => {
             if (req.body.howToWork) excursion.howToWork = JSON.parse(req.body.howToWork);
             if (req.body.excursionType) excursion.excursionType = JSON.parse(req.body.excursionType);
 
-            console.log("excursion: ", excursion)
             await excursion.save();
             return res.json({ status: 200, message: "Data updated successfully", data: excursion });
         }

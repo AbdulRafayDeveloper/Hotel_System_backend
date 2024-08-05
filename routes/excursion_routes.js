@@ -3,7 +3,7 @@ const excursion_controller = require('../controllers/excursion_controller');
 const upload = require('../helper/upload')
 
 const router = express.Router();
-const cpUpload = upload.fields([{ name: 'thumbs', maxCount: 12 }, { name: 'goodPlaceThumbs', maxCount: 12 }])
+const cpUpload = upload.fields([{ name: 'thumbs', maxCount: 50 }, { name: 'goodPlaceThumbs', maxCount: 50 }])
 
 router.post('/excursions/categories', excursion_controller.addCategory);
 router.get('/excursions/categories', excursion_controller.listOfCategories);
